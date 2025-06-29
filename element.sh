@@ -7,8 +7,20 @@ ARG=$1
 
 if [[ $ARG ]]
 then
+  # check if the giving arg is a name
+  if [[ $ARG =~ ^[0-9]+$ ]]
+  then
+    # Numeric: atomic number
+    RESULT_EL=$($PSQL "SELECT atomic_number, symbol, name FROM elements WHERE atomic_number::TEXT='$ARG';")
+  else
+    # String: could be symbol or name
+    # Format first letter uppercase
+    ARG_FORMATTED="$(tr '[:lower:]' '[:upper:]' <<< ${ARG:0:1})$(tr '[:upper:]' '[:lower:]' <<< ${ARG:1})"
+    RESULT_EL=$($PSQL "SELECT atomic_number, symbol, name FROM elements WHERE symbol='$ARG_FORMATTED' OR name='$ARG_FORMATTED';")
+  fi
+
   # get the arguments from the table elements
-  RESULT_EL=$($PSQL "SELECT atomic_number, symbol, name FROM elements WHERE atomic_number::TEXT='$ARG' OR symbol='$ARG' OR name='$ARG';")
+  # RESULT_EL=$($PSQL "SELECT atomic_number, symbol, name FROM elements WHERE atomic_number::TEXT='$ARG' OR symbol='$ARG' OR name='$ARG';")
 
   if [[ -z $RESULT_EL ]]
   then
