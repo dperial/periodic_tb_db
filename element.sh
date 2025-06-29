@@ -15,18 +15,30 @@ then
     echo "I could not find that element in the database."
   else
     RESULT=""
+    RESULT_PROP=""
+    RESULT_TYPE=""
+    # elements arguments
     while IFS="|" read ATOMIC_NUMBER SYMBOL NAME
     do
-        RESULT="The element with atomic number $ATOMIC_NUMBER is $NAME ($SYMBOL). "
+      RESULT="The element with atomic number $ATOMIC_NUMBER is $NAME ($SYMBOL). "
 
-        RESULT_PROP=$($PSQL "SELECT type, atomic_mass, melting_point_celsius, boiling_point_celsius FROM properties WHERE atomic_number=$ATOMIC_NUMBER;")
+      RESULT_PROPS=$($PSQL "SELECT atomic_mass, melting_point_celsius, boiling_point_celsius, type_id FROM properties WHERE atomic_number=$ATOMIC_NUMBER;")
+      # properties arguments
+      while IFS="|" read ATOMIC_MASS MELTING BOILING TYPE_ID
+      do
+        RESULT_PROP=" with a mass of $ATOMIC_MASS amu. $NAME has a melting point of $MELTING celsius and a boiling point of $BOILING celsius."
 
-        while IFS="|" read TYPE ATOMIC_MASS MELTING BOILING
+        # get the type from types table
+        RESULT_TYPES=$($PSQL "SELECT type FROM types WHERE type_id=$TYPE_ID;")
+        while IFS="|" read TYPE
         do
-          RESULT+="It's a $TYPE, with a mass of $ATOMIC_MASS amu. $NAME has a melting point of $MELTING celsius and a boiling point of $BOILING celsius."
-        done <<< "$RESULT_PROP"
-
-        echo "$RESULT"
+          RESULT_TYPE="It's a $TYPE,"
+        done <<< "$RESULT_TYPES"
+      done <<< "$RESULT_PROPS"
+      
+      RESULT+="$RESULT_TYPE"
+      RESULT+="$RESULT_PROP"
+      echo "$RESULT"
     done <<< "$RESULT_EL"
   fi
 else
