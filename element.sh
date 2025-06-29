@@ -15,7 +15,7 @@ RESULT=$($PSQL "SELECT atomic_number, symbol, name FROM elements WHERE atomic_nu
 
 if [[ -z $RESULT ]]
 then
-  echo "Element not found."
+  echo "I could not find that element in the database."
 else
   echo "$RESULT" | while IFS="|" read ATOMIC_NUMBER SYMBOL NAME
   do
